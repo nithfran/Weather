@@ -4,7 +4,6 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -44,17 +43,24 @@ public class Weather {
 	public static String TEMPARATURE;
 	public static float PRESSURE;
 	public static float HUMIDITY;
+	
+	//used for Junit Test case
+	public static String flag = "";;
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String args[]) throws Exception {
+		runWeather(args);
+	}
+
+	public static void runWeather(String[] args) throws Exception {
 
 		log.info("Application started at " + new Date());
 		log.info("Inside main Method");
 
 		readPropertFile(args);
 
-		generateJSONObjectFromTxtFile();
+		generateJSONObjectFromTxtFile(INPUT_FILE);
 
-		getCachedOutputJSONFile();
+		getCachedOutputJSONFile(OUTPUT_CACHE_FILE);
 
 		Iterator keys = inputObj.keys();
 
@@ -66,7 +72,14 @@ public class Weather {
 		while (keys.hasNext()) {
 			String cityName = ((String) keys.next());
 			String id = inputObj.get(cityName).toString();
-			CLIMATE = getClimate(cityName, id);
+			try {
+				CLIMATE = getClimate(cityName, id);
+			} catch (Exception e) {
+				if(e.getMessage().contains("City Name")){
+					System.out.println("City Name " +cityName+" or ID "+id+" is invalid. going with the next iteration");
+					continue;
+				}
+			}
 			getParameters(cityName, id);
 
 			System.out.println(cityName.substring(0, Math.min(
@@ -94,7 +107,7 @@ public class Weather {
 		writter.close();
 	}
 
-	public static void readPropertFile(String[] args) {
+	public static void readPropertFile(String[] args) throws Exception {
 		log.info("Entering method readPropertFile(args)");
 		File path = null;
 		try {
@@ -102,27 +115,25 @@ public class Weather {
 			FileInputStream stream = new FileInputStream(path);
 			prop.load(stream);
 			stream.close();
-			INPUT_FILE = prop.getProperty("INPUT_FILE");
-			OUTPUT_CACHE_FILE = prop.getProperty("OUTPUT_CACHE_FILE");
-			if (INPUT_FILE == null || INPUT_FILE.equalsIgnoreCase("")) {
-				System.out
-						.println("input Property File path is invalid. Exiting");
-				System.exit(0);
-			}
-			if (OUTPUT_CACHE_FILE == null || OUTPUT_CACHE_FILE.equalsIgnoreCase("")) {
-				System.out
-						.println("Output Property File path is invalid. Exiting");
-				System.exit(0);
-			}
 		} catch (Exception e) {
-			System.out
-					.println("Error reading the input Property File. Exiting");
-			System.exit(0);
+			throw new Exception(
+					"Error reading the Config File. Exiting");
+		}
+		INPUT_FILE = prop.getProperty("INPUT_FILE");
+		OUTPUT_CACHE_FILE = prop.getProperty("OUTPUT_CACHE_FILE");
+		if (INPUT_FILE == null || INPUT_FILE.equalsIgnoreCase("")) {
+			throw new Exception(
+					"input Property File path is invalid. Exiting");
+		}
+		if (OUTPUT_CACHE_FILE == null
+				|| OUTPUT_CACHE_FILE.equalsIgnoreCase("")) {
+			throw new Exception(
+					"Output Property File path is invalid. Exiting");
 		}
 		log.info("Exiting method readPropertFile(args)");
 	}
 
-	public static void generateJSONObjectFromTxtFile() throws Exception {
+	public static void generateJSONObjectFromTxtFile(String INPUT_FILE) throws Exception {
 		log.info("Entering method generateJSONObjectFromTxtFile()");
 		FileReader reader = new FileReader(INPUT_FILE);
 		BufferedReader bReader = new BufferedReader(reader);
@@ -134,9 +145,7 @@ public class Weather {
 		try {
 			inputObj = new JSONObject(tempValueHolder);
 		} catch (Exception e) {
-			System.out
-					.println("No Valid JSON Object present in the Input File. Exiting");
-			System.exit(0);
+			throw new Exception("No Valid JSON Object present in the Input File. Exiting");
 		}
 
 		bReader.close();
@@ -145,18 +154,34 @@ public class Weather {
 	}
 
 	public static String getClimate(String cityName, String id)
-			throws IOException, JSONException {
+			throws Exception {
 		log.info("Entering the method getClimate(cityName)");
 		// Get the openWeatherMap Client Object.
 		OwmClient owmClient = new OwmClient();
 		// Get the Weather Object for the specified City locations.
 		WeatherStatusResponse currentWeather = null;
 		try {
+			if(flag == "no cache"){
+				throw new Exception("no cache");
+			}
+			//Added for testing Junit Test cases.
+			if("Inactive Internet Connection".equalsIgnoreCase(flag)){
+				throw new Exception("Inactive Internet Connection");
+			}
 			currentWeather = owmClient.currentWeatherAtCity(cityName, id);
+			if(!currentWeather.hasCode()){
+				throw new Exception("City Name "+cityName + " is invalid");
+			}
 
-		} catch (UnknownHostException e) {
+		} catch (Exception e) {
+			if(e.getMessage().contains("City Name")){
+				throw e;
+			}
 			System.out
 					.println("There is no active internet connection, hence not able to retrieve values. Trying to get the old cached values");
+			if(flag == "no cache"){
+				cacheObj = null;
+			}
 			if (cacheObj != null && cacheObj.length() > 0) {
 				Iterator iter = inputObj.keys();
 				while (iter.hasNext()) {
@@ -200,11 +225,6 @@ public class Weather {
 				"44b7893f584ceea58513ae9795cb0525");
 		// Get the CurrentWeather object for the mentioned City.
 		CurrentWeather cwd = owm.currentWeatherByCityName(cityName, id);
-
-		if (cwd.getCityName() == null) {
-			System.out.println("City is not valid");
-			System.exit(0);
-		}
 		Locale locale = Locale.getDefault();
 		TimeZone currentTimeZone = TimeZone.getDefault();
 		DateFormat formatter = DateFormat.getDateTimeInstance(
@@ -241,7 +261,7 @@ public class Weather {
 		log.info("Exiting the method getClimate()");
 	}
 
-	public static void getCachedOutputJSONFile() throws IOException {
+	public static void getCachedOutputJSONFile(String OUTPUT_CACHE_FILE) throws IOException {
 		log.info("Entering method getCachedOutputJSONFile()");
 		File file = new File(OUTPUT_CACHE_FILE);
 		if (!file.exists()) {
