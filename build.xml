@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<project name="JUnit Test" default="run" basedir=".">
+	<target name="cleanup">
+		<delete dir="SourceCode"/>
+		<delete dir="bin"/>
+		<delete dir="lib"/>
+		<delete dir="src"/>		
+	</target>
+	<target name="create" depends="cleanup">
+		<mkdir dir="bin"/>
+		<mkdir dir="lib"/>
+		<mkdir dir="src"/>
+	</target>
+	<target name="copy" depends="create">
+		<copy overwrite="true" todir="lib">
+			<fileset dir="." includes="*.jar"></fileset>
+		</copy>
+		<copy overwrite="true" todir="src">
+			<fileset dir="." includes="*.java"></fileset>
+		</copy>
+	</target>
+	<path id="classpath">
+		<path location="lib">
+			<fileset dir="lib" includes="*.jar"></fileset>
+		</path>
+		<path location="bin"></path>
+	</path>
+	<target name="compile" depends="copy">
+		<javac classpathref="classpath" includeantruntime="true" srcdir="src" destdir="bin" description="Compile" includes="*.java"></javac>
+	</target>
+	<target name="run" depends="compile">
+		<java classpathref="classpath" classname="Weather" args="config.properties" fork="true"></java>
+	</target>
+</project>
