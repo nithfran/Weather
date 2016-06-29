@@ -110,10 +110,10 @@ public class JUnitTestCaseSuite {
 		}
 		
 				
-		// Test 8
+		// Test 7
 		System.out.println("---------------------------------------");
 		System.out
-				.println("Test 8 :- Running without an active internet Connection  and no cache file");
+				.println("Test 7 :- Running without an active internet Connection  and no cache file");
 		System.out.println("---------------------------------------");
 		try {
 			Weather.flag = "Inactive Internet Connection";
