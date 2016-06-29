@@ -33,7 +33,18 @@
 	</target>
 	<target name="run">
 		<java classpathref="classpath" classname="Weather" fork="true">
+			<arg line="config.properties"/>	
+		</java>
+	</target>
+	<target name="runTestCase">
+		<java classpathref="classpath" classname="JUnitTestCaseSuite" fork="true">
 			<arg line="config.properties"/>
+			<arg line="config1.properties"/>
+			<arg line="config2.properties"/>
+			<arg line="config3.properties"/>
+			<arg line="config4.properties"/>
+			<arg line="config5.properties"/>
+			<arg line="config6.properties"/>	
 		</java>
 	</target>
 </project>
