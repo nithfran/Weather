@@ -18,10 +18,13 @@
 		<copy overwrite="true" todir="src">
 			<fileset dir="." includes="*.java"></fileset>
 		</copy>
+		<copy overwrite="true" todir="bin">
+			<fileset dir="." includes="*.properties"></fileset>
+		</copy>
 	</target>
 	<path id="classpath">
 		<path location="lib">
-			<fileset dir="lib" includes="*.jar"></fileset>
+			<fileset dir="lib" includes="*.*"></fileset>
 		</path>
 		<path location="bin"></path>
 	</path>
@@ -29,6 +32,8 @@
 		<javac classpathref="classpath" includeantruntime="true" srcdir="src" destdir="bin" description="Compile" includes="*.java"></javac>
 	</target>
 	<target name="run" depends="compile">
-		<java classpathref="classpath" classname="Weather" args="config.properties" fork="true"></java>
+		<java classpathref="classpath" classname="Weather" fork="true">
+			<arg line="config.properties"/>
+		</java>
 	</target>
 </project>
