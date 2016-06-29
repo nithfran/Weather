@@ -31,7 +31,7 @@
 	<target name="compile" depends="copy">
 		<javac classpathref="classpath" includeantruntime="true" srcdir="src" destdir="bin" description="Compile" includes="*.java"></javac>
 	</target>
-	<target name="run" depends="compile">
+	<target name="run">
 		<java classpathref="classpath" classname="Weather" fork="true">
 			<arg line="config.properties"/>
 		</java>
